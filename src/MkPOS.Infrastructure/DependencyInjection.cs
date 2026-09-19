@@ -21,6 +21,7 @@ public static class DependencyInjection
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<ISaleRepository, SaleRepository>();
         services.AddScoped<ICustomerRepository, CustomerRepository>();
+        services.AddScoped<IReportRepository, ReportRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
 
         services.AddScoped<DatabaseInitializer>();

@@ -70,6 +70,9 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private Task GoToCustomersAsync() => NavigateToAsync<CustomersViewModel>();
 
+    [RelayCommand]
+    private Task GoToReportsAsync() => NavigateToAsync<ReportsViewModel>();
+
     private async Task NavigateToAsync<TModule>() where TModule : IModuleViewModel
     {
         var module = _services.GetRequiredService<TModule>();

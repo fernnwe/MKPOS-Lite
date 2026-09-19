@@ -1,4 +1,5 @@
 using MKPOS.Application.Abstractions.Repositories;
+using MKPOS.Application.DTOs;
 using MKPOS.Domain.Entities;
 
 namespace MKPOS.Tests.Helpers;
@@ -246,5 +247,83 @@ public sealed class FakeCustomerRepository : ICustomerRepository
         }
 
         return Task.CompletedTask;
+    }
+}
+
+public sealed class FakeReportRepository : IReportRepository
+{
+    private readonly List<Sale> _sales = new();
+    private readonly List<Customer> _customers = new();
+
+    public FakeReportRepository(IEnumerable<Sale>? sales = null, IEnumerable<Customer>? customers = null)
+    {
+        if (sales is not null)
+        {
+            _sales.AddRange(sales);
+        }
+
+        if (customers is not null)
+        {
+            _customers.AddRange(customers);
+        }
+    }
+
+    public Task<PeriodSummaryDto> GetPeriodSummaryAsync(DateTime from, DateTime to, CancellationToken ct = default)
+    {
+        var inRange = _sales.Where(s => s.SaleDate >= from && s.SaleDate < to).ToList();
+        var valid = inRange.Where(s => !s.IsCancelled).ToList();
+
+        return Task.FromResult(new PeriodSummaryDto(
+            inRange.Count,
+            inRange.Count(s => s.IsCancelled),
+            valid.Sum(s => s.Subtotal),
+            valid.Sum(s => s.TaxAmount),
+            valid.Sum(s => s.Total)));
+    }
+
+    public Task<IReadOnlyList<DailySalesDto>> GetDailySalesAsync(DateTime from, DateTime to, CancellationToken ct = default)
+    {
+        IReadOnlyList<DailySalesDto> result = _sales
+            .Where(s => s.SaleDate >= from && s.SaleDate < to && !s.IsCancelled)
+            .GroupBy(s => s.SaleDate.Date)
+            .OrderBy(g => g.Key)
+            .Select(g => new DailySalesDto(g.Key, g.Count(), g.Sum(s => s.Total)))
+            .ToList();
+        return Task.FromResult(result);
+    }
+
+    public Task<IReadOnlyList<PaymentMethodSummaryDto>> GetSalesByPaymentMethodAsync(DateTime from, DateTime to, CancellationToken ct = default)
+    {
+        IReadOnlyList<PaymentMethodSummaryDto> result = _sales
+            .Where(s => s.SaleDate >= from && s.SaleDate < to && !s.IsCancelled)
+            .GroupBy(s => s.PaymentMethod)
+            .OrderBy(g => g.Key)
+            .Select(g => new PaymentMethodSummaryDto(g.Key.ToString(), g.Count(), g.Sum(s => s.Total)))
+            .ToList();
+        return Task.FromResult(result);
+    }
+
+    public Task<IReadOnlyList<TopProductDto>> GetTopProductsAsync(DateTime from, DateTime to, int take, CancellationToken ct = default)
+    {
+        IReadOnlyList<TopProductDto> result = _sales
+            .Where(s => s.SaleDate >= from && s.SaleDate < to && !s.IsCancelled)
+            .SelectMany(s => s.Items)
+            .GroupBy(i => i.ProductName)
+            .Select(g => new TopProductDto(g.Key, g.Sum(i => i.Quantity), g.Sum(i => i.LineTotal)))
+            .OrderByDescending(p => p.Quantity)
+            .ThenByDescending(p => p.Revenue)
+            .Take(take)
+            .ToList();
+        return Task.FromResult(result);
+    }
+
+    public Task<IReadOnlyList<CustomerBalanceDto>> GetCustomerBalancesAsync(CancellationToken ct = default)
+    {
+        IReadOnlyList<CustomerBalanceDto> result = _customers
+            .Where(c => c.IsActive && c.Balance > 0)
+            .OrderByDescending(c => c.Balance)
+            .Select(c => new CustomerBalanceDto(c.Name, c.Phone, c.Balance))
+            .ToList();
+        return Task.FromResult(result);
     }
 }

@@ -46,7 +46,7 @@
                 <Button Content="Inventario" Style="{StaticResource NavButtonStyle}" Command="{Binding GoToInventoryCommand}"/>
                 <Button Content="Ventas" Style="{StaticResource NavButtonStyle}" Command="{Binding GoToSalesCommand}"/>
                 <Button Content="Cliente" Style="{StaticResource NavButtonStyle}" Command="{Binding GoToCustomersCommand}"/>
-                <Button Content="Reportes" Style="{StaticResource NavButtonStyle}" IsEnabled="False"/>
+                <Button Content="Reportes" Style="{StaticResource NavButtonStyle}" Command="{Binding GoToReportsCommand}"/>
                 <Button Content="Configuración" Style="{StaticResource NavButtonStyle}" IsEnabled="False"/>
             </StackPanel>
         </Border>
