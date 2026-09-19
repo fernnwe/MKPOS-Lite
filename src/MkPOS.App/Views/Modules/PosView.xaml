@@ -1,0 +1,204 @@
+<UserControl x:Class="MKPOS.App.Views.Modules.PosView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ent="clr-namespace:MKPOS.Domain.Entities;assembly=MKPOS.Domain">
+    <Grid Margin="4">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1.35*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ============ Buscador y productos ============ -->
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="6" Padding="12,10" Margin="0,0,0,10">
+                <StackPanel Orientation="Horizontal">
+                    <TextBox Width="240" Padding="8,5" BorderBrush="#CBD5E1" BorderThickness="1"
+                             Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}"
+                             ToolTip="Buscar por nombre, código o código de barras">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Return" Command="{Binding SearchCommand}"/>
+                        </TextBox.InputBindings>
+                    </TextBox>
+                    <Button Content="Buscar" Style="{StaticResource SecondaryButtonStyle}" Margin="6,0,0,0" Command="{Binding SearchCommand}"/>
+                    <Button Content="Agregar seleccionado" Style="{StaticResource PrimaryButtonStyle}" Margin="12,0,0,0" Command="{Binding AddSelectedCommand}"/>
+                </StackPanel>
+            </Border>
+
+            <DataGrid Grid.Row="1" Style="{StaticResource ModuleTableStyle}"
+                      ItemsSource="{Binding Products}"
+                      SelectedItem="{Binding SelectedRow}"
+                      IsReadOnly="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Código" Binding="{Binding Sku}" Width="90"/>
+                    <DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="*"/>
+                    <DataGridTextColumn Header="Precio" Binding="{Binding SalePrice, StringFormat={}{0:N2}}" Width="80"/>
+                    <DataGridTextColumn Header="Existencia" Binding="{Binding Stock, StringFormat={}{0:N2}}" Width="80"/>
+                    <DataGridTemplateColumn Header="" Width="80">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="Agregar" Padding="8,2" Cursor="Hand"
+                                        Background="#1F3864" Foreground="White" BorderThickness="0"
+                                        Command="{Binding DataContext.AddProductCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Background" Value="#1F3864"/>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}" CornerRadius="3">
+                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#16294B"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+
+        <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="Transparent"/>
+
+        <!-- ============ Carrito y cobro ============ -->
+        <Border Grid.Column="2" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="6" Padding="16,12">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="Carrito" FontSize="16" FontWeight="SemiBold" Foreground="#1F3864" Margin="0,0,0,8"/>
+
+                <DataGrid Grid.Row="1" Style="{StaticResource ModuleTableStyle}"
+                          ItemsSource="{Binding Cart}"
+                          IsReadOnly="True"
+                          CanUserSortColumns="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="*"/>
+                        <DataGridTemplateColumn Header="Cant." Width="96">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <Button Content="−" Width="24" Height="24" Padding="0" Cursor="Hand"
+                                                Command="{Binding DataContext.DecreaseCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"/>
+                                        <TextBox Width="34" Margin="3,0" TextAlignment="Center"
+                                                 Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}"
+                                                 Padding="1,2" BorderBrush="#CBD5E1"/>
+                                        <Button Content="+" Width="24" Height="24" Padding="0" Cursor="Hand"
+                                                Command="{Binding DataContext.IncreaseCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Importe" Binding="{Binding LineTotal, StringFormat={}{0:N2}}" Width="80"/>
+                        <DataGridTemplateColumn Header="" Width="44">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="✕" Width="24" Height="24" Padding="0" Cursor="Hand"
+                                            Background="#DC2626" Foreground="White" BorderThickness="0"
+                                            Command="{Binding DataContext.RemoveLineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- Totales -->
+                <Border Grid.Row="2" Background="#F8FAFC" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="4" Padding="12,10" Margin="0,10,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Subtotal" Foreground="#374151"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Subtotal, StringFormat={}{0:N2}}" Foreground="#374151"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="IVA" Foreground="#374151"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding TaxAmount, StringFormat={}{0:N2}}" Foreground="#374151"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Total" FontWeight="SemiBold" FontSize="15" Foreground="#1F3864" Margin="0,4,0,0"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Total, StringFormat={}{0:N2}}" FontWeight="Bold" FontSize="17" Foreground="#1F3864" Margin="0,4,0,0"/>
+                    </Grid>
+                </Border>
+
+                <!-- Pago -->
+                <StackPanel Grid.Row="3" Margin="0,10,0,0">
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#DC2626" TextWrapping="Wrap" Margin="0,0,0,6"
+                               Visibility="{Binding ErrorMessage, Converter={StaticResource NonEmptyToVisibility}}"/>
+                    <Grid Visibility="{Binding IsPaying, Converter={StaticResource BoolToVisibility}}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0" Margin="0,0,0,8">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Método de pago" Foreground="#374151"/>
+                            <ComboBox Grid.Row="1" Margin="0,4,0,0" Padding="6,4"
+                                      SelectedValue="{Binding SelectedPaymentMethod}"
+                                      SelectedValuePath="Tag">
+                                <ComboBoxItem Content="Efectivo" Tag="{x:Static ent:PaymentMethod.Cash}"/>
+                                <ComboBoxItem Content="Tarjeta" Tag="{x:Static ent:PaymentMethod.Card}"/>
+                                <ComboBoxItem Content="Transferencia" Tag="{x:Static ent:PaymentMethod.Transfer}"/>
+                            </ComboBox>
+                        </Grid>
+
+                        <StackPanel Grid.Row="1" Margin="0,0,0,8" Visibility="{Binding IsCash, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="Recibido" Foreground="#374151"/>
+                            <TextBox Text="{Binding PaymentAmountText, UpdateSourceTrigger=PropertyChanged}" Padding="8,5" BorderBrush="#CBD5E1" BorderThickness="1" Margin="0,4,0,0"
+                                     Width="160" HorizontalAlignment="Left"/>
+                            <TextBlock Margin="0,6,0,0" Foreground="#16A34A" FontWeight="SemiBold">
+                                <Run Text="Cambio: "/>
+                                <Run Text="{Binding Change, Mode=OneWay, StringFormat={}{0:N2}}"/>
+                            </TextBlock>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="Cancelar" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding CancelPaymentCommand}"/>
+                            <Button Content="Confirmar venta" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" Command="{Binding ConfirmPaymentCommand}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Button Content="Cobrar" Height="42" FontSize="15" FontWeight="SemiBold"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Command="{Binding PayCommand}"
+                            Visibility="{Binding IsPaying, Converter={StaticResource InverseBoolToVisibility}}"/>
+
+                    <TextBlock Text="{Binding Message}" Foreground="#16A34A" TextWrapping="Wrap" Margin="0,10,0,0" FontWeight="SemiBold"
+                               Visibility="{Binding Message, Converter={StaticResource NonEmptyToVisibility}}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

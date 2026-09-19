@@ -56,6 +56,20 @@ public sealed class ProductRepository : IProductRepository
             .FirstOrDefaultAsync(p => p.Id == id, ct);
     }
 
+    public async Task<IReadOnlyList<Product>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
+    {
+        var idList = ids.ToList();
+        if (idList.Count == 0)
+        {
+            return Array.Empty<Product>();
+        }
+
+        return await _db.Products
+            .AsNoTracking()
+            .Where(p => idList.Contains(p.Id))
+            .ToListAsync(ct);
+    }
+
     public async Task<bool> ExistsSkuAsync(string sku, Guid? excludeId, CancellationToken ct = default)
     {
         return await _db.Products

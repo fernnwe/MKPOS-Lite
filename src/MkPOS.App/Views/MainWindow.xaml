@@ -40,11 +40,11 @@
         <Border DockPanel.Dock="Left" Background="#FFFFFF" Width="220"
                 BorderBrush="#E5E7EB" BorderThickness="0,0,1,0">
             <StackPanel Margin="12,16">
-                <Button Content="Punto de venta" Style="{StaticResource NavButtonStyle}" IsEnabled="False"/>
+                <Button Content="Punto de venta" Style="{StaticResource NavButtonStyle}" Command="{Binding GoToPosCommand}"/>
                 <Button Content="Productos" Style="{StaticResource NavButtonStyle}" Command="{Binding GoToProductsCommand}"/>
                 <Button Content="Categorías" Style="{StaticResource NavButtonStyle}" Command="{Binding GoToCategoriesCommand}"/>
                 <Button Content="Inventario" Style="{StaticResource NavButtonStyle}" Command="{Binding GoToInventoryCommand}"/>
-                <Button Content="Ventas" Style="{StaticResource NavButtonStyle}" IsEnabled="False"/>
+                <Button Content="Ventas" Style="{StaticResource NavButtonStyle}" Command="{Binding GoToSalesCommand}"/>
                 <Button Content="Cliente" Style="{StaticResource NavButtonStyle}" IsEnabled="False"/>
                 <Button Content="Reportes" Style="{StaticResource NavButtonStyle}" IsEnabled="False"/>
                 <Button Content="Configuración" Style="{StaticResource NavButtonStyle}" IsEnabled="False"/>

@@ -10,6 +10,7 @@
 
             <local:NonEmptyStringToVisibilityConverter x:Key="NonEmptyToVisibility"/>
             <local:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+            <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility"/>
 
             <!-- Botón de la barra superior -->
             <Style x:Key="HeaderButtonStyle" TargetType="Button">
@@ -187,6 +188,12 @@
             </DataTemplate>
             <DataTemplate DataType="{x:Type vm:InventoryViewModel}">
                 <views:InventoryView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:PosViewModel}">
+                <views:PosView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:SalesViewModel}">
+                <views:SalesView/>
             </DataTemplate>
 
         </ResourceDictionary>

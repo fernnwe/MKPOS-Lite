@@ -132,6 +132,13 @@ public sealed class FakeProductRepository : IProductRepository
         return Task.FromResult(_products.FirstOrDefault(p => p.Id == id));
     }
 
+    public Task<IReadOnlyList<Product>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken ct = default)
+    {
+        var idSet = ids.ToHashSet();
+        IReadOnlyList<Product> result = _products.Where(p => idSet.Contains(p.Id)).ToList();
+        return Task.FromResult(result);
+    }
+
     public Task<bool> ExistsSkuAsync(string sku, Guid? excludeId, CancellationToken ct = default)
     {
         return Task.FromResult(_products.Any(p =>
@@ -161,5 +168,35 @@ public sealed class FakeProductRepository : IProductRepository
         }
 
         return Task.CompletedTask;
+    }
+}
+
+public sealed class FakeSaleRepository : ISaleRepository
+{
+    private readonly List<Sale> _sales = new();
+
+    public Task<int> GetLastTicketNumberAsync(CancellationToken ct = default)
+    {
+        return Task.FromResult(_sales.Count == 0 ? 0 : _sales.Max(s => s.TicketNumber));
+    }
+
+    public Task CompleteAsync(Sale sale, IReadOnlyList<Product> productsToAdjust, CancellationToken ct = default)
+    {
+        foreach (var product in productsToAdjust)
+        {
+            product.UpdatedAt = DateTime.UtcNow;
+        }
+
+        _sales.Add(sale);
+        return Task.CompletedTask;
+    }
+
+    public Task<IReadOnlyList<Sale>> GetRecentAsync(int take, CancellationToken ct = default)
+    {
+        IReadOnlyList<Sale> result = _sales
+            .OrderByDescending(s => s.SaleDate)
+            .Take(take)
+            .ToList();
+        return Task.FromResult(result);
     }
 }

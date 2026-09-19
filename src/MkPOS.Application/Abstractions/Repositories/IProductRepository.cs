@@ -11,6 +11,7 @@ public interface IProductRepository
         CancellationToken ct = default);
 
     Task<Product?> GetByIdAsync(Guid id, CancellationToken ct = default);
+    Task<IReadOnlyList<Product>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken ct = default);
     Task<bool> ExistsSkuAsync(string sku, Guid? excludeId, CancellationToken ct = default);
     Task<bool> ExistsBarcodeAsync(string barcode, Guid? excludeId, CancellationToken ct = default);
     Task AddAsync(Product product, CancellationToken ct = default);
