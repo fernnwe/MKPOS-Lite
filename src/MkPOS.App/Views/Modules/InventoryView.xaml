@@ -1,0 +1,86 @@
+<UserControl x:Class="MKPOS.App.Views.Modules.InventoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="4">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Barra de herramientas -->
+        <Border Grid.Row="0" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="6" Padding="12,10" Margin="0,0,0,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <Button Content="Ajustar existencias" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding AdjustCommand}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <CheckBox Content="Solo bajo stock" VerticalAlignment="Center" Margin="0,0,10,0"
+                              IsChecked="{Binding OnlyLowStock}"/>
+                    <TextBox Width="220" Padding="8,5" BorderBrush="#CBD5E1" BorderThickness="1"
+                             Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}"
+                             ToolTip="Buscar por nombre, código o código de barras"/>
+                    <Button Content="Buscar" Style="{StaticResource SecondaryButtonStyle}" Margin="6,0,0,0" Command="{Binding SearchCommand}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Tabla de inventario -->
+        <DataGrid Grid.Row="1" Style="{StaticResource ModuleTableStyle}"
+                  ItemsSource="{Binding Rows}"
+                  SelectedItem="{Binding SelectedRow}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Código" Binding="{Binding Sku}" Width="110"/>
+                <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*"/>
+                <DataGridTextColumn Header="Categoría" Binding="{Binding CategoryName}" Width="140"/>
+                <DataGridTextColumn Header="Costo" Binding="{Binding CostValue, StringFormat={}{0:N2}}" Width="100"/>
+                <DataGridTextColumn Header="Existencia" Binding="{Binding Stock, StringFormat={}{0:N2}}" Width="110"/>
+                <DataGridTextColumn Header="Mínimo" Binding="{Binding MinStock, StringFormat={}{0:N2}}" Width="100"/>
+                <DataGridTextColumn Header="Estado" Binding="{Binding Status}" Width="130">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{Binding StatusColor}"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Ajuste de existencias -->
+        <Border Grid.Row="2" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="6" Padding="16,12" Margin="0,10,0,0"
+                Visibility="{Binding IsAdjusting, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel>
+                <TextBlock Text="Ajuste de existencias"
+                           FontSize="15" FontWeight="SemiBold" Foreground="#1F3864" Margin="0,0,0,10"/>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="Nueva existencia (conteo físico):" Foreground="#374151" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBox Grid.Column="1" Width="200" HorizontalAlignment="Left"
+                             Text="{Binding AdjustStockText, UpdateSourceTrigger=PropertyChanged}"
+                             Padding="8,5" BorderBrush="#CBD5E1" BorderThickness="1"/>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <Button Content="Cancelar" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding CancelAdjustCommand}"/>
+                        <Button Content="Guardar ajuste" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" Command="{Binding SaveAdjustCommand}"/>
+                    </StackPanel>
+                </Grid>
+
+                <TextBlock Text="{Binding ErrorMessage}" Foreground="#DC2626" TextWrapping="Wrap" Margin="0,10,0,0"
+                           Visibility="{Binding ErrorMessage, Converter={StaticResource NonEmptyToVisibility}}"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

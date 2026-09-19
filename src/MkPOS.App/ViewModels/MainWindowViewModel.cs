@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 using MKPOS.App.Services;
 using MKPOS.Application.Abstractions.Repositories;
 
@@ -9,6 +10,7 @@ public partial class MainWindowViewModel : ObservableObject
 {
     private readonly SessionService _session;
     private readonly ICompanyRepository _companies;
+    private readonly IServiceProvider _services;
 
     [ObservableProperty]
     private string _companyName = string.Empty;
@@ -16,12 +18,19 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private string _userDisplay = string.Empty;
 
+    [ObservableProperty]
+    private object? _currentModule;
+
     public event EventHandler? LogoutRequested;
 
-    public MainWindowViewModel(SessionService session, ICompanyRepository companies)
+    public MainWindowViewModel(
+        SessionService session,
+        ICompanyRepository companies,
+        IServiceProvider services)
     {
         _session = session;
         _companies = companies;
+        _services = services;
     }
 
     public async Task InitializeAsync()
@@ -32,6 +41,8 @@ public partial class MainWindowViewModel : ObservableObject
         UserDisplay = _session.CurrentUser is { } user
             ? user.DisplayName
             : string.Empty;
+
+        await NavigateToAsync<WelcomeViewModel>();
     }
 
     [RelayCommand]
@@ -39,5 +50,21 @@ public partial class MainWindowViewModel : ObservableObject
     {
         _session.EndSession();
         LogoutRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private Task GoToProductsAsync() => NavigateToAsync<ProductsViewModel>();
+
+    [RelayCommand]
+    private Task GoToCategoriesAsync() => NavigateToAsync<CategoriesViewModel>();
+
+    [RelayCommand]
+    private Task GoToInventoryAsync() => NavigateToAsync<InventoryViewModel>();
+
+    private async Task NavigateToAsync<TModule>() where TModule : IModuleViewModel
+    {
+        var module = _services.GetRequiredService<TModule>();
+        await module.LoadAsync();
+        CurrentModule = module;
     }
 }

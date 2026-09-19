@@ -41,8 +41,9 @@
                 BorderBrush="#E5E7EB" BorderThickness="0,0,1,0">
             <StackPanel Margin="12,16">
                 <Button Content="Punto de venta" Style="{StaticResource NavButtonStyle}" IsEnabled="False"/>
-                <Button Content="Productos" Style="{StaticResource NavButtonStyle}" IsEnabled="False"/>
-                <Button Content="Inventario" Style="{StaticResource NavButtonStyle}" IsEnabled="False"/>
+                <Button Content="Productos" Style="{StaticResource NavButtonStyle}" Command="{Binding GoToProductsCommand}"/>
+                <Button Content="Categorías" Style="{StaticResource NavButtonStyle}" Command="{Binding GoToCategoriesCommand}"/>
+                <Button Content="Inventario" Style="{StaticResource NavButtonStyle}" Command="{Binding GoToInventoryCommand}"/>
                 <Button Content="Ventas" Style="{StaticResource NavButtonStyle}" IsEnabled="False"/>
                 <Button Content="Cliente" Style="{StaticResource NavButtonStyle}" IsEnabled="False"/>
                 <Button Content="Reportes" Style="{StaticResource NavButtonStyle}" IsEnabled="False"/>
@@ -50,16 +51,7 @@
             </StackPanel>
         </Border>
 
-        <!-- Contenido -->
-        <Grid>
-            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                <TextBlock Text="Bienvenido a MKPOS Lite"
-                           FontSize="30" FontWeight="Bold" Foreground="#1F3864"
-                           HorizontalAlignment="Center"/>
-                <TextBlock Text="Los módulos de venta, inventario y reportes estarán disponibles en las siguientes fases."
-                           FontSize="14" Foreground="#6B7280" TextWrapping="Wrap"
-                           HorizontalAlignment="Center" Margin="0,10,0,0"/>
-            </StackPanel>
-        </Grid>
+        <!-- Contenido del módulo -->
+        <ContentControl Content="{Binding CurrentModule}" Margin="20,16,20,20"/>
     </DockPanel>
 </Window>

@@ -83,6 +83,11 @@ public partial class App : System.Windows.Application
 
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<MainWindow>();
+
+        services.AddTransient<WelcomeViewModel>();
+        services.AddTransient<ProductsViewModel>();
+        services.AddTransient<CategoriesViewModel>();
+        services.AddTransient<InventoryViewModel>();
     }
 
     public void ShowLoginWindow()
