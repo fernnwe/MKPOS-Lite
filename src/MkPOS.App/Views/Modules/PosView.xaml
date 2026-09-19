@@ -160,18 +160,30 @@
                         </Grid.RowDefinitions>
 
                         <Grid Grid.Row="0" Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="1*"/>
+                            </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="Método de pago" Foreground="#374151"/>
-                            <ComboBox Grid.Row="1" Margin="0,4,0,0" Padding="6,4"
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Método de pago" Foreground="#374151"/>
+                            <ComboBox Grid.Row="1" Grid.Column="0" Margin="0,4,8,0" Padding="6,4"
                                       SelectedValue="{Binding SelectedPaymentMethod}"
                                       SelectedValuePath="Tag">
                                 <ComboBoxItem Content="Efectivo" Tag="{x:Static ent:PaymentMethod.Cash}"/>
                                 <ComboBoxItem Content="Tarjeta" Tag="{x:Static ent:PaymentMethod.Card}"/>
                                 <ComboBoxItem Content="Transferencia" Tag="{x:Static ent:PaymentMethod.Transfer}"/>
+                                <ComboBoxItem Content="Crédito" Tag="{x:Static ent:PaymentMethod.Credit}"/>
                             </ComboBox>
+
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="Cliente" Foreground="#374151"/>
+                            <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,4,0,0" Padding="6,4"
+                                      ItemsSource="{Binding Customers}"
+                                      SelectedItem="{Binding SelectedCustomer}"
+                                      DisplayMemberPath="Name"/>
                         </Grid>
 
                         <StackPanel Grid.Row="1" Margin="0,0,0,8" Visibility="{Binding IsCash, Converter={StaticResource BoolToVisibility}}">

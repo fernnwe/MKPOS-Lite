@@ -94,7 +94,18 @@ public sealed class ProductRepository : IProductRepository
 
     public async Task UpdateAsync(Product product, CancellationToken ct = default)
     {
-        _db.Products.Update(product);
+        var tracked = await _db.Products
+            .FirstOrDefaultAsync(p => p.Id == product.Id, ct);
+
+        if (tracked is not null)
+        {
+            _db.Entry(tracked).CurrentValues.SetValues(product);
+        }
+        else
+        {
+            _db.Products.Update(product);
+        }
+
         await _db.SaveChangesAsync(ct);
     }
 }

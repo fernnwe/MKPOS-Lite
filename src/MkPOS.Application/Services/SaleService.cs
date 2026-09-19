@@ -9,15 +9,18 @@ public sealed class SaleService : ISaleService
     private readonly ISaleRepository _sales;
     private readonly IProductRepository _products;
     private readonly ICompanyRepository _companies;
+    private readonly ICustomerRepository _customers;
 
     public SaleService(
         ISaleRepository sales,
         IProductRepository products,
-        ICompanyRepository companies)
+        ICompanyRepository companies,
+        ICustomerRepository customers)
     {
         _sales = sales;
         _products = products;
         _companies = companies;
+        _customers = customers;
     }
 
     public async Task<CreateSaleResult> CompleteAsync(CreateSaleRequest request, Guid userId, CancellationToken ct = default)
@@ -89,9 +92,25 @@ public sealed class SaleService : ISaleService
 
         var total = subtotal + taxAmount;
 
+        Customer? customer = null;
+
         if (request.PaymentMethod == PaymentMethod.Cash && request.PaymentAmount < total)
         {
             return CreateSaleResult.Fail("El efectivo recibido es insuficiente para cubrir la venta.");
+        }
+
+        if (request.PaymentMethod == PaymentMethod.Credit)
+        {
+            if (request.CustomerId is not { } customerId)
+            {
+                return CreateSaleResult.Fail("Seleccione un cliente para la venta a crédito.");
+            }
+
+            customer = await _customers.GetByIdAsync(customerId, ct);
+            if (customer is null || !customer.IsActive)
+            {
+                return CreateSaleResult.Fail("El cliente seleccionado no es válido.");
+            }
         }
 
         var change = request.PaymentMethod == PaymentMethod.Cash
@@ -104,6 +123,11 @@ public sealed class SaleService : ISaleService
             var product = productsById[group.Key];
             product.Stock -= group.Sum(l => l.Quantity);
             adjustedProducts.Add(product);
+        }
+
+        if (customer is not null)
+        {
+            customer.Balance += total;
         }
 
         var ticketNumber = (await _sales.GetLastTicketNumberAsync(ct)) + 1;
@@ -121,11 +145,13 @@ public sealed class SaleService : ISaleService
             PaymentAmount = request.PaymentMethod == PaymentMethod.Cash ? request.PaymentAmount : total,
             ChangeAmount = change,
             IsCancelled = false,
+            CustomerId = customer?.Id,
+            CustomerName = customer?.Name,
             CreatedAt = DateTime.UtcNow,
             Items = items
         };
 
-        await _sales.CompleteAsync(sale, adjustedProducts, ct);
+        await _sales.CompleteAsync(sale, adjustedProducts, customer, ct);
 
         return CreateSaleResult.Ok(ticketNumber, total, change);
     }
@@ -144,7 +170,8 @@ public sealed class SaleService : ISaleService
                 s.Total,
                 PaymentMethodName(s.PaymentMethod),
                 s.IsCancelled,
-                s.Items.Count))
+                s.Items.Count,
+                s.CustomerName ?? "Mostrador"))
             .ToList();
     }
 
@@ -155,6 +182,7 @@ public sealed class SaleService : ISaleService
             PaymentMethod.Cash => "Efectivo",
             PaymentMethod.Card => "Tarjeta",
             PaymentMethod.Transfer => "Transferencia",
+            PaymentMethod.Credit => "Crédito",
             _ => method.ToString()
         };
     }

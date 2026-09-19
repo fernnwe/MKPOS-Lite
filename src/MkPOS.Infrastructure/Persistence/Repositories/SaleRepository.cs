@@ -22,14 +22,32 @@ public sealed class SaleRepository : ISaleRepository
             .FirstOrDefaultAsync(ct) ?? 0;
     }
 
-    public async Task CompleteAsync(Sale sale, IReadOnlyList<Product> productsToAdjust, CancellationToken ct = default)
+    public async Task CompleteAsync(Sale sale, IReadOnlyList<Product> productsToAdjust, Customer? customer, CancellationToken ct = default)
     {
         await using var transaction = await _db.Database.BeginTransactionAsync(ct);
 
         _db.Sales.Add(sale);
+
         foreach (var product in productsToAdjust)
         {
-            _db.Products.Update(product);
+            var tracked = await _db.Products.FirstOrDefaultAsync(p => p.Id == product.Id, ct);
+            if (tracked is null)
+            {
+                continue;
+            }
+
+            tracked.Stock = product.Stock;
+            tracked.UpdatedAt = DateTime.UtcNow;
+        }
+
+        if (customer is not null)
+        {
+            var trackedCustomer = await _db.Customers.FirstOrDefaultAsync(c => c.Id == customer.Id, ct);
+            if (trackedCustomer is not null)
+            {
+                trackedCustomer.Balance = customer.Balance;
+                trackedCustomer.UpdatedAt = DateTime.UtcNow;
+            }
         }
 
         await _db.SaveChangesAsync(ct);

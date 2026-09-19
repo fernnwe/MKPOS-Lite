@@ -10,12 +10,25 @@ public sealed class SaleServiceTests
     private static SaleService CreateSut(
         out FakeSaleRepository sales,
         out FakeProductRepository products,
-        out FakeCompanyRepository companies)
+        out FakeCompanyRepository companies,
+        out FakeCustomerRepository customers)
     {
         sales = new FakeSaleRepository();
         products = new FakeProductRepository();
         companies = new FakeCompanyRepository();
-        return new SaleService(sales, products, companies);
+        customers = new FakeCustomerRepository();
+        return new SaleService(sales, products, companies, customers);
+    }
+
+    private static Customer NewCustomer(string name = "Cliente Uno", decimal balance = 0m)
+    {
+        return new Customer
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            Balance = balance,
+            IsActive = true
+        };
     }
 
     private static Product NewProduct(
@@ -38,20 +51,21 @@ public sealed class SaleServiceTests
         };
     }
 
-    private static CreateSaleRequest Request(Product product, decimal quantity = 1, PaymentMethod method = PaymentMethod.Cash, decimal? paymentAmount = null)
+    private static CreateSaleRequest Request(Product product, decimal quantity = 1, PaymentMethod method = PaymentMethod.Cash, decimal? paymentAmount = null, Guid? customerId = null)
     {
         return new CreateSaleRequest
         {
             Lines = new List<SaleLineInput> { new(product.Id, quantity) },
             PaymentMethod = method,
-            PaymentAmount = paymentAmount ?? 0m
+            PaymentAmount = paymentAmount ?? 0m,
+            CustomerId = customerId
         };
     }
 
     [Fact]
     public async Task CompleteAsync_WithCash_ComputesTotalsFolioAndChange()
     {
-        var sut = CreateSut(out _, out var products, out _);
+        var sut = CreateSut(out _, out var products, out _, out _);
         var product = NewProduct(stock: 50m);
         await products.AddAsync(product);
 
@@ -67,7 +81,7 @@ public sealed class SaleServiceTests
     [Fact]
     public async Task CompleteAsync_WithCard_PaymentAmountEqualsTotal()
     {
-        var sut = CreateSut(out _, out var products, out _);
+        var sut = CreateSut(out _, out var products, out _, out _);
         var product = NewProduct(salePrice: 100m, taxRate: 0m);
         await products.AddAsync(product);
 
@@ -81,7 +95,7 @@ public sealed class SaleServiceTests
     [Fact]
     public async Task CompleteAsync_EmptyCart_Fails()
     {
-        var sut = CreateSut(out _, out _, out _);
+        var sut = CreateSut(out _, out _, out _, out _);
 
         var request = new CreateSaleRequest
         {
@@ -98,7 +112,7 @@ public sealed class SaleServiceTests
     [Fact]
     public async Task CompleteAsync_InsufficientCash_Fails()
     {
-        var sut = CreateSut(out _, out var products, out _);
+        var sut = CreateSut(out _, out var products, out _, out _);
         var product = NewProduct(salePrice: 100m, taxRate: 0m);
         await products.AddAsync(product);
 
@@ -112,7 +126,7 @@ public sealed class SaleServiceTests
     [Fact]
     public async Task CompleteAsync_OutOfStock_Fails()
     {
-        var sut = CreateSut(out _, out var products, out _);
+        var sut = CreateSut(out _, out var products, out _, out _);
         var product = NewProduct(stock: 1m);
         await products.AddAsync(product);
 
@@ -125,7 +139,7 @@ public sealed class SaleServiceTests
     [Fact]
     public async Task CompleteAsync_UsesCompanyTax_WhenProductHasNoOwn()
     {
-        var sut = CreateSut(out _, out var products, out var companies);
+        var sut = CreateSut(out _, out var products, out var companies, out _);
         var product = NewProduct(salePrice: 100m, taxRate: null);
         await products.AddAsync(product);
         await companies.SaveAsync(new Company { Name = "Test", TaxRate = 10m });
@@ -140,7 +154,7 @@ public sealed class SaleServiceTests
     [Fact]
     public async Task CompleteAsync_AssignsSequentialFolio()
     {
-        var sut = CreateSut(out _, out var products, out _);
+        var sut = CreateSut(out _, out var products, out _, out _);
         var product = NewProduct(salePrice: 10m, taxRate: 0m);
         await products.AddAsync(product);
         var userId = Guid.NewGuid();
@@ -152,5 +166,58 @@ public sealed class SaleServiceTests
         Assert.True(second.Success);
         Assert.Equal(1, first.TicketNumber);
         Assert.Equal(2, second.TicketNumber);
+    }
+
+    [Fact]
+    public async Task CompleteAsync_WithCredit_IncreasesBalanceAndSnapshotsCustomer()
+    {
+        var sut = CreateSut(out var sales, out var products, out _, out var customers);
+        var product = NewProduct(salePrice: 100m, taxRate: 0m);
+        await products.AddAsync(product);
+        var customer = NewCustomer(name: "Cliente Fiado");
+        await customers.AddAsync(customer);
+
+        var result = await sut.CompleteAsync(Request(product, quantity: 2, method: PaymentMethod.Credit, customerId: customer.Id), userId: Guid.NewGuid());
+
+        Assert.True(result.Success);
+        Assert.Equal(200m, result.Total);
+        Assert.Equal(0m, result.ChangeAmount);
+        Assert.Equal(200m, customer.Balance);
+        Assert.Equal(48m, product.Stock);
+
+        var recent = await sales.GetRecentAsync(1);
+        var sale = Assert.Single(recent);
+        Assert.Equal("Cliente Fiado", sale.CustomerName);
+        Assert.Equal(customer.Id, sale.CustomerId);
+    }
+
+    [Fact]
+    public async Task CompleteAsync_WithCredit_RequiresCustomerId()
+    {
+        var sut = CreateSut(out _, out var products, out _, out _);
+        var product = NewProduct(salePrice: 100m, taxRate: 0m);
+        await products.AddAsync(product);
+
+        var result = await sut.CompleteAsync(Request(product, method: PaymentMethod.Credit), userId: Guid.NewGuid());
+
+        Assert.False(result.Success);
+        Assert.Equal("Seleccione un cliente para la venta a crédito.", result.Error);
+    }
+
+    [Fact]
+    public async Task CompleteAsync_WithCredit_InactiveCustomerFails()
+    {
+        var sut = CreateSut(out _, out var products, out _, out var customers);
+        var product = NewProduct(salePrice: 100m, taxRate: 0m);
+        await products.AddAsync(product);
+        var customer = NewCustomer();
+        customer.IsActive = false;
+        await customers.AddAsync(customer);
+
+        var result = await sut.CompleteAsync(Request(product, method: PaymentMethod.Credit, customerId: customer.Id), userId: Guid.NewGuid());
+
+        Assert.False(result.Success);
+        Assert.Equal("El cliente seleccionado no es válido.", result.Error);
+        Assert.Equal(0m, customer.Balance);
     }
 }

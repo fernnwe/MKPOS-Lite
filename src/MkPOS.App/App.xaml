@@ -195,6 +195,9 @@
             <DataTemplate DataType="{x:Type vm:SalesViewModel}">
                 <views:SalesView/>
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:CustomersViewModel}">
+                <views:CustomersView/>
+            </DataTemplate>
 
         </ResourceDictionary>
     </Application.Resources>

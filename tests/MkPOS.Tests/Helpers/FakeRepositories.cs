@@ -180,11 +180,16 @@ public sealed class FakeSaleRepository : ISaleRepository
         return Task.FromResult(_sales.Count == 0 ? 0 : _sales.Max(s => s.TicketNumber));
     }
 
-    public Task CompleteAsync(Sale sale, IReadOnlyList<Product> productsToAdjust, CancellationToken ct = default)
+    public Task CompleteAsync(Sale sale, IReadOnlyList<Product> productsToAdjust, Customer? customer, CancellationToken ct = default)
     {
         foreach (var product in productsToAdjust)
         {
             product.UpdatedAt = DateTime.UtcNow;
+        }
+
+        if (customer is not null)
+        {
+            customer.UpdatedAt = DateTime.UtcNow;
         }
 
         _sales.Add(sale);
@@ -198,5 +203,48 @@ public sealed class FakeSaleRepository : ISaleRepository
             .Take(take)
             .ToList();
         return Task.FromResult(result);
+    }
+}
+
+public sealed class FakeCustomerRepository : ICustomerRepository
+{
+    private readonly List<Customer> _customers = new();
+
+    public Task<IReadOnlyList<Customer>> GetAllAsync(string? search, bool includeInactive, CancellationToken ct = default)
+    {
+        var query = _customers.Where(c => includeInactive || c.IsActive);
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(c =>
+                c.Name.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || (c.Phone != null && c.Phone.Contains(term, StringComparison.OrdinalIgnoreCase))
+                || (c.Email != null && c.Email.Contains(term, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        IReadOnlyList<Customer> result = query.OrderBy(c => c.Name).ToList();
+        return Task.FromResult(result);
+    }
+
+    public Task<Customer?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        return Task.FromResult(_customers.FirstOrDefault(c => c.Id == id));
+    }
+
+    public Task AddAsync(Customer customer, CancellationToken ct = default)
+    {
+        _customers.Add(customer);
+        return Task.CompletedTask;
+    }
+
+    public Task UpdateAsync(Customer customer, CancellationToken ct = default)
+    {
+        var index = _customers.FindIndex(c => c.Id == customer.Id);
+        if (index >= 0)
+        {
+            _customers[index] = customer;
+        }
+
+        return Task.CompletedTask;
     }
 }

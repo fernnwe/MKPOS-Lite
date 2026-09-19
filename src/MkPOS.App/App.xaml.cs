@@ -90,6 +90,7 @@ public partial class App : System.Windows.Application
         services.AddTransient<InventoryViewModel>();
         services.AddTransient<PosViewModel>();
         services.AddTransient<SalesViewModel>();
+        services.AddTransient<CustomersViewModel>();
     }
 
     public void ShowLoginWindow()

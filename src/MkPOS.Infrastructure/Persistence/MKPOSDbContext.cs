@@ -12,6 +12,7 @@ public sealed class MKPOSDbContext : DbContext
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Sale> Sales => Set<Sale>();
     public DbSet<SaleItem> SaleItems => Set<SaleItem>();
+    public DbSet<Customer> Customers => Set<Customer>();
 
     public MKPOSDbContext(DbContextOptions<MKPOSDbContext> options)
         : base(options)

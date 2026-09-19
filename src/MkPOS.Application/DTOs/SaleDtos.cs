@@ -10,6 +10,9 @@ public sealed class CreateSaleRequest
     public List<SaleLineInput> Lines { get; init; } = new();
     public PaymentMethod PaymentMethod { get; init; }
     public decimal PaymentAmount { get; init; }
+
+    /// <summary>Cliente al que se registra la venta a crédito; null en ventas de mostrador.</summary>
+    public Guid? CustomerId { get; init; }
 }
 
 public sealed class CreateSaleResult
@@ -40,7 +43,8 @@ public sealed record SaleDto(
     decimal Total,
     string PaymentMethodName,
     bool IsCancelled,
-    int ItemCount);
+    int ItemCount,
+    string? CustomerName);
 
 public sealed record SaleItemDto(
     string ProductName,

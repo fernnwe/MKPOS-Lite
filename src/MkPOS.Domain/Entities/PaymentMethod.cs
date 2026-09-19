@@ -12,5 +12,8 @@ public enum PaymentMethod
     Card = 1,
 
     /// <summary>Transferencia bancaria o SPEI.</summary>
-    Transfer = 2
+    Transfer = 2,
+
+    /// <summary>Venta a crédito (fiado) registrada a un cliente.</summary>
+    Credit = 3
 }

@@ -16,6 +16,7 @@ public partial class PosViewModel : ObservableObject, IModuleViewModel
     private readonly IProductService _products;
     private readonly ISaleService _sales;
     private readonly ICompanyRepository _companies;
+    private readonly ICustomerService _customers;
     private readonly SessionService _session;
     private readonly HashSet<CartLine> _attachedLines = new();
 
@@ -23,6 +24,7 @@ public partial class PosViewModel : ObservableObject, IModuleViewModel
 
     public ObservableCollection<ProductDto> Products { get; } = new();
     public ObservableCollection<CartLine> Cart { get; } = new();
+    public ObservableCollection<CustomerDto> Customers { get; } = new();
 
     [ObservableProperty]
     private string _search = string.Empty;
@@ -52,6 +54,9 @@ public partial class PosViewModel : ObservableObject, IModuleViewModel
     [ObservableProperty]
     private string _errorMessage = string.Empty;
 
+    [ObservableProperty]
+    private CustomerDto? _selectedCustomer;
+
     public decimal Subtotal => Cart.Sum(l => l.LineSubtotal);
     public decimal TaxAmount => Cart.Sum(l => l.LineTax);
     public decimal Total => Cart.Sum(l => l.LineTotal);
@@ -67,11 +72,13 @@ public partial class PosViewModel : ObservableObject, IModuleViewModel
         IProductService products,
         ISaleService sales,
         ICompanyRepository companies,
+        ICustomerService customers,
         SessionService session)
     {
         _products = products;
         _sales = sales;
         _companies = companies;
+        _customers = customers;
         _session = session;
 
         Cart.CollectionChanged += OnCartCollectionChanged;
@@ -81,7 +88,21 @@ public partial class PosViewModel : ObservableObject, IModuleViewModel
     {
         var company = await _companies.GetCurrentAsync();
         _defaultTaxRate = company?.TaxRate ?? 0m;
+        await LoadCustomersAsync();
         await SearchAsync();
+    }
+
+    private async Task LoadCustomersAsync()
+    {
+        var list = await _customers.GetCustomersAsync(null, includeInactive: false);
+        Customers.Clear();
+        Customers.Add(new CustomerDto(Guid.Empty, "-- Seleccione cliente --", null, null, null, 0m, true));
+        foreach (var customer in list)
+        {
+            Customers.Add(customer);
+        }
+
+        SelectedCustomer = null;
     }
 
     partial void OnSelectedPaymentMethodChanged(PaymentMethod value)
@@ -255,11 +276,21 @@ public partial class PosViewModel : ObservableObject, IModuleViewModel
             }
         }
 
+        if (SelectedPaymentMethod == PaymentMethod.Credit)
+        {
+            if (SelectedCustomer is null || SelectedCustomer.Id == Guid.Empty)
+            {
+                ErrorMessage = "Seleccione un cliente para la venta a crédito.";
+                return;
+            }
+        }
+
         var request = new CreateSaleRequest
         {
             Lines = Cart.Select(l => new SaleLineInput(l.ProductId, l.Quantity)).ToList(),
             PaymentMethod = SelectedPaymentMethod,
-            PaymentAmount = paymentAmount
+            PaymentAmount = paymentAmount,
+            CustomerId = SelectedPaymentMethod == PaymentMethod.Credit ? SelectedCustomer!.Id : null
         };
 
         IsBusy = true;

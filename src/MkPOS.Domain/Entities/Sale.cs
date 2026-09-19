@@ -26,6 +26,13 @@ public sealed class Sale
     public decimal ChangeAmount { get; set; }
     public bool IsCancelled { get; set; }
     public DateTime? CancelledAt { get; set; }
+
+    /// <summary>Cliente asociado cuando la venta es a crédito; null en ventas de mostrador.</summary>
+    public Guid? CustomerId { get; set; }
+
+    /// <summary>Instantánea del nombre del cliente (null en ventas de mostrador).</summary>
+    public string? CustomerName { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public List<SaleItem> Items { get; set; } = new();

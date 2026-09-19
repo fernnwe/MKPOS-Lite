@@ -1,0 +1,139 @@
+<UserControl x:Class="MKPOS.App.Views.Modules.CustomersView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:MKPOS.App.Converters">
+    <Grid Margin="4">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Barra de herramientas -->
+        <Border Grid.Row="0" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="6" Padding="12,10" Margin="0,0,0,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <TextBox Width="220" Padding="8,5" BorderBrush="#CBD5E1" BorderThickness="1"
+                             Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}"
+                             ToolTip="Buscar por nombre, teléfono o correo">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Return" Command="{Binding RunSearchCommand}"/>
+                        </TextBox.InputBindings>
+                    </TextBox>
+                    <Button Content="Nuevo cliente" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" Command="{Binding NewCommand}"/>
+                    <Button Content="Editar" Style="{StaticResource SecondaryButtonStyle}" Margin="8,0,0,0" Command="{Binding EditCommand}"/>
+                    <Button Content="Abonar" Style="{StaticResource SecondaryButtonStyle}" Margin="8,0,0,0" Command="{Binding AbonarCommand}"/>
+                    <Button Content="Desactivar" Style="{StaticResource DangerButtonStyle}" Margin="8,0,0,0" Command="{Binding DeactivateCommand}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <CheckBox Content="Mostrar inactivos" VerticalAlignment="Center"
+                              IsChecked="{Binding IncludeInactive}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Lista de clientes -->
+        <DataGrid Grid.Row="1" Style="{StaticResource ModuleTableStyle}"
+                  ItemsSource="{Binding Customers}"
+                  SelectedItem="{Binding SelectedRow}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*"/>
+                <DataGridTextColumn Header="Teléfono" Binding="{Binding Phone}" Width="130"/>
+                <DataGridTextColumn Header="Correo" Binding="{Binding Email}" Width="180"/>
+                <DataGridTextColumn Header="Dirección" Binding="{Binding Address}" Width="2*"/>
+                <DataGridTextColumn Header="Saldo" Binding="{Binding Balance, StringFormat={}{0:N2}}" Width="90"/>
+                <DataGridTextColumn Header="Estado" Width="90">
+                    <DataGridTextColumn.Binding>
+                        <Binding Path="IsActive">
+                            <Binding.Converter>
+                                <local:BoolToTextConverter TrueText="Activo" FalseText="Inactivo"/>
+                            </Binding.Converter>
+                        </Binding>
+                    </DataGridTextColumn.Binding>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <StackPanel Grid.Row="2">
+            <!-- Abono -->
+            <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="6" Padding="16,12" Margin="0,10,0,0"
+                    Visibility="{Binding IsAbonando, Converter={StaticResource BoolToVisibility}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="Abonar al cliente seleccionado" Foreground="#1F3864" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                    <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                        <TextBlock Text="Monto" Foreground="#374151"/>
+                        <TextBox Width="120" Text="{Binding AbonoText, UpdateSourceTrigger=PropertyChanged}" Padding="8,5" BorderBrush="#CBD5E1" BorderThickness="1"/>
+                    </StackPanel>
+                    <Button Grid.Column="2" Content="Confirmar abono" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" VerticalAlignment="Bottom" Command="{Binding ConfirmAbonoCommand}"/>
+                    <Button Grid.Column="3" Content="Cancelar" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom" Command="{Binding CancelAbonoCommand}"/>
+
+                    <TextBlock Grid.Column="4" Text="{Binding ErrorMessage}" Foreground="#DC2626" TextWrapping="Wrap" VerticalAlignment="Bottom"
+                               Visibility="{Binding ErrorMessage, Converter={StaticResource NonEmptyToVisibility}}"/>
+                </Grid>
+            </Border>
+
+            <!-- Editor de cliente -->
+            <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="6" Padding="16,12" Margin="0,10,0,0"
+                    Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel>
+                    <TextBlock Text="{Binding EditorTitle}" FontSize="15" FontWeight="SemiBold" Foreground="#1F3864" Margin="0,0,0,10"/>
+
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,10">
+                            <TextBlock Text="Nombre" Foreground="#374151"/>
+                            <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Padding="8,5" BorderBrush="#CBD5E1" BorderThickness="1"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,10,10">
+                            <TextBlock Text="Teléfono" Foreground="#374151"/>
+                            <TextBox Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" Padding="8,5" BorderBrush="#CBD5E1" BorderThickness="1"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,10">
+                            <TextBlock Text="Correo electrónico" Foreground="#374151"/>
+                            <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" Padding="8,5" BorderBrush="#CBD5E1" BorderThickness="1"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,10,10">
+                            <TextBlock Text="Dirección" Foreground="#374151"/>
+                            <TextBox Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}" Padding="8,5" BorderBrush="#CBD5E1" BorderThickness="1"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Bottom">
+                            <Button Content="Cancelar" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding CancelEditCommand}"/>
+                            <Button Content="Guardar" Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" Command="{Binding SaveCommand}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#DC2626" TextWrapping="Wrap" Margin="0,10,0,0"
+                               Visibility="{Binding ErrorMessage, Converter={StaticResource NonEmptyToVisibility}}"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Grid>
+</UserControl>

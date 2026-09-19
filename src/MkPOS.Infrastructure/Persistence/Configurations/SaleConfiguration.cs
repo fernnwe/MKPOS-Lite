@@ -29,8 +29,13 @@ public sealed class SaleConfiguration : IEntityTypeConfiguration<Sale>
         builder.Property(s => s.PaymentMethod)
             .HasConversion<int>();
 
+        builder.Property(s => s.CustomerName)
+            .HasMaxLength(200);
+
         builder.HasIndex(s => s.TicketNumber)
             .IsUnique();
+
+        builder.HasIndex(s => s.CustomerId);
 
         builder.HasMany(s => s.Items)
             .WithOne(i => i.Sale)

@@ -26,6 +26,7 @@
                 <DataGridTextColumn Header="IVA" Binding="{Binding TaxAmount, StringFormat={}{0:N2}}" Width="90"/>
                 <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat={}{0:N2}}" Width="100"/>
                 <DataGridTextColumn Header="Método" Binding="{Binding PaymentMethodName}" Width="100"/>
+                <DataGridTextColumn Header="Cliente" Binding="{Binding CustomerName}" Width="140"/>
                 <DataGridTextColumn Header="Estado" Width="110">
                     <DataGridTextColumn.Binding>
                         <Binding Path="IsCancelled">
