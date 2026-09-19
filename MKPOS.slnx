@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MKPOS.App/MKPOS.App.csproj" />
+    <Project Path="src/MKPOS.Application/MKPOS.Application.csproj" />
+    <Project Path="src/MKPOS.Domain/MKPOS.Domain.csproj" />
+    <Project Path="src/MKPOS.Infrastructure/MKPOS.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MKPOS.Tests/MKPOS.Tests.csproj" />
+  </Folder>
+</Solution>
